@@ -1,0 +1,54 @@
+/certificate
+/certificate import
+/file
+/file print
+/interface
+/interface bridge
+/interface bridge filter
+/interface bridge port
+/interface ethernet
+/interface ethernet
+/interface list
+/interface list member
+/interface ovpn-client
+/interface ovpn-client remove
+/interface ovpn-server
+/interface vlan
+/interface wireless
+/interface wireless security-profiles
+/ip
+/ip address
+/ip dhcp-server
+/ip dhcp-server lease
+/ip dhcp-server network
+/ip dns
+/ip dns static
+/ip firewall
+/ip firewall address-list
+/ip firewall filter
+/ip firewall nat
+/ip firewall nat
+/ip ipsec
+/ip ipsec policy
+/ip neighbor
+/ip neighbor discovery-settings
+/ip pool
+/ip route
+/ip service
+/ip settings
+/ip ssh
+/ip ssh import-host-key
+/lcd pin
+/ppp profile
+/ppp secret
+/system identity
+/system logging
+/system logging action
+/system package
+/system scheduler
+/system script
+/tool bandwidth-server
+/tool fetch
+/tool mac-server
+/user
+/user ssh-keys import
