@@ -43,8 +43,8 @@ Naming is important:
 ### Configuration
 
 ```yaml
-has_flash: false     # some RouterOS devices Flash directory is
-# accessible via explicit /flash/ prefix, for some just /
+has_flash: false     # for some RouterOS devices Flash directory is        
+                     # accessible via explicit /flash/ prefix, for some just /
 
 host: 192.168.1.1    # IP of the Mikrotik device, can be overriden with --override-id CLI argument
 
