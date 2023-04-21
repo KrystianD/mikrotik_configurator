@@ -15,6 +15,7 @@ def main():
     argparser.add_argument('-n', '--dry-run', action='store_true')
     argparser.add_argument('--reset', action='store_true')
     argparser.add_argument('--override-ip', type=str)
+    argparser.add_argument('--ssh-pass', type=str)
     argparser.add_argument('files', type=str, nargs="+", metavar="NAME")
     args = argparser.parse_args()
 
@@ -75,6 +76,8 @@ def main():
             f.name,
             f"admin@{host}:{base_path}{script_name}"
         ]
+        if args.ssh_pass:
+            cargs = ["sshpass", "-p", args.ssh_pass] + cargs
         print(" ".join(cargs))
         if not dry_run:
             subprocess.check_call(cargs)
@@ -91,6 +94,8 @@ def main():
             f"admin@{host}",
             cmd,
         ]
+        if args.ssh_pass:
+            cargs = ["sshpass", "-p", args.ssh_pass] + cargs
         print(" ".join(cargs))
         if not dry_run:
             if args.reset:
