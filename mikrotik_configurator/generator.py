@@ -28,7 +28,7 @@ def load_file(path, name):
 
     cnt = f"""
 :execute script=":put \\"{esc}\\"" file="{name}"
-:delay 1000ms
+:while ([:len [/file find where name=\"{name}\"]]=0) do={{:delay 100ms}}
 """
     return cnt
 
