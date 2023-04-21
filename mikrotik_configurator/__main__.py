@@ -16,6 +16,7 @@ def main():
     argparser.add_argument('--reset', action='store_true')
     argparser.add_argument('--override-ip', type=str)
     argparser.add_argument('--ssh-pass', type=str)
+    argparser.add_argument('--generate-only', action='store_true')
     argparser.add_argument('files', type=str, nargs="+", metavar="NAME")
     args = argparser.parse_args()
 
@@ -71,6 +72,8 @@ def main():
     script_name = "output.rsc"
 
     print(script)
+    if args.generate_only:
+        return
 
     with tempfile.NamedTemporaryFile(mode="wt") as f:
         f.write(script)
