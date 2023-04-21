@@ -20,7 +20,10 @@ def main():
     args = argparser.parse_args()
 
     dry_run = args.dry_run
-    cfg = yaml.load(open(args.config, "rt"), Loader=yaml.FullLoader)
+    if hasattr(yaml, "SafeLoader"):
+        cfg = yaml.load(open(args.config, "rt"), Loader=yaml.SafeLoader)
+    else:
+        cfg = yaml.load(open(args.config, "rt"))
 
     host = cfg["host"]
     has_flash = cfg.get("has_flash", False)
