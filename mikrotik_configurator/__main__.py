@@ -28,8 +28,13 @@ def main():
     host = cfg["host"]
     has_flash = cfg.get("has_flash", False)
 
+    ssh_port = 22
     if args.override_ip is not None:
         host = args.override_ip
+
+        if ":" in host:
+            host, ssh_port_str = host.split(":", 1)
+            ssh_port = int(ssh_port_str)
 
     files = args.files
 
@@ -73,6 +78,7 @@ def main():
 
         cargs = [
             "scp",
+            "-P", str(ssh_port),
             "-o", "StrictHostKeyChecking=false",
             "-o", "UserKnownHostsFile=/dev/null",
             "-o", "PubkeyAcceptedKeyTypes=+ssh-rsa",
@@ -91,6 +97,7 @@ def main():
             cmd = f"/import file={base_path}{script_name}"
         cargs = [
             "ssh",
+            "-p", str(ssh_port),
             "-o", "StrictHostKeyChecking=false",
             "-o", "UserKnownHostsFile=/dev/null",
             "-o", "PubkeyAcceptedKeyTypes=+ssh-rsa",
