@@ -71,9 +71,12 @@ def main():
     base_path = "flash/" if has_flash else ""
     script_name = "output.rsc"
 
-    print(script)
     if args.generate_only:
+        print(script)
         return
+
+    for index, line in enumerate(script.splitlines(), start=1):
+        print('{:4d}: {}'.format(index, line.rstrip()))
 
     with tempfile.NamedTemporaryFile(mode="wt") as f:
         f.write(script)
