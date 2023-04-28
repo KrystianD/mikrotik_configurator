@@ -44,18 +44,6 @@ def main():
         print("mixed up order")
         exit(1)
 
-    if args.reset and orders[0] != 0:
-        print("reset must start with 0_0")
-        exit(1)
-
-    if not args.reset and orders[0] == 0:
-        print("not reset can't start with 0_0")
-        exit(1)
-
-    if not dry_run and args.reset:
-        if not query_yes_no("Are you sure you want to reset configuration?", "no"):
-            exit(1)
-
     def gen(x):
         s = f'\n/log info message="starting {x}..."\n'
         s += generator.render_file(x, cfg.get("include_dirs", []), cfg.get("variables", {}))
@@ -74,6 +62,18 @@ def main():
     if args.generate_only:
         print(script)
         return
+
+    if args.reset and orders[0] != 0:
+        print("reset must start with 0_0")
+        exit(1)
+
+    if not args.reset and orders[0] == 0:
+        print("not reset can't start with 0_0")
+        exit(1)
+
+    if not dry_run and args.reset:
+        if not query_yes_no("Are you sure you want to reset configuration?", "no"):
+            exit(1)
 
     for index, line in enumerate(script.splitlines(), start=1):
         print('{:4d}: {}'.format(index, line.rstrip()))
