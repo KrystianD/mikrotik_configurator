@@ -3,6 +3,7 @@ from textwrap import indent
 from typing import Dict, List
 
 from jinja2 import Environment, FileSystemLoader
+from netaddr import *
 
 from utils import read_text_file
 
@@ -81,6 +82,12 @@ def render_file(path: str, include_dirs: List[str], variables: Dict[str, str]):
     env.globals['escape_string'] = escape_string
     env.globals['rollback_delete_chain'] = rollback_delete_chain
     env.globals = {**env.globals, **variables}
+
+    env.filters["ipnet"] = lambda x: str(IPNetwork(x))
+    env.filters["network"] = lambda x: str(IPNetwork(x).cidr)
+    env.filters["host"] = lambda x: str(IPNetwork(x).ip)
+    env.filters["netmask"] = lambda x: str(IPNetwork(x).netmask)
+    env.filters["with_host"] = lambda x, host: IPNetwork(x).network + IPAddress(f"0.0.0.{host}")
 
     content = env.get_template(os.path.basename(path))
     content = content.render(load_file=load_file)
