@@ -78,6 +78,9 @@ def render_file(path: str, include_dirs: List[str], variables: Dict[str, str]):
             *include_dirs,
         ]),
     )
+
+    env.line_comment_prefix = '#'
+
     env.globals['register_cleanup'] = register_cleanup
     env.globals['escape_string'] = escape_string
     env.globals['rollback_delete_chain'] = rollback_delete_chain
