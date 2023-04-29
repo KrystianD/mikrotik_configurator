@@ -91,6 +91,7 @@ def render_file(path: str, include_dirs: List[str], variables: Dict[str, str]):
     env.filters["host"] = lambda x: str(IPNetwork(x).ip)
     env.filters["netmask"] = lambda x: str(IPNetwork(x).netmask)
     env.filters["with_host"] = lambda x, host: IPNetwork(x).network + IPAddress(f"0.0.0.{host}")
+    env.filters["gateway"] = lambda x: IPNetwork(x).network + IPAddress(f"0.0.0.1")
 
     content = env.get_template(os.path.basename(path))
     content = content.render(load_file=load_file)
