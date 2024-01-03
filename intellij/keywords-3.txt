@@ -1,3 +1,6 @@
+/caps-man configuration
+/caps-man manager
+/caps-man provisioning
 /certificate
 /certificate import
 /file
