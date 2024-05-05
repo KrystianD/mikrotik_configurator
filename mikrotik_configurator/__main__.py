@@ -24,6 +24,7 @@ def main():
     if hasattr(yaml, "SafeLoader"):
         cfg = yaml.load(open(args.config, "rt"), Loader=yaml.SafeLoader)
     else:
+        # noinspection PyArgumentList
         cfg = yaml.load(open(args.config, "rt"))
 
     host = cfg["host"]
