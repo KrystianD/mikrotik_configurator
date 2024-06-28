@@ -128,6 +128,7 @@ def cmd_apply(args, cfg):
             "-o", "StrictHostKeyChecking=false",
             "-o", "UserKnownHostsFile=/dev/null",
             "-o", "PubkeyAcceptedKeyTypes=+ssh-rsa",
+            "-o", "LogLevel=ERROR",
             f.name,
             f"admin@{host}:{base_path}{script_name}"
         ]
@@ -147,6 +148,7 @@ def cmd_apply(args, cfg):
             "-o", "StrictHostKeyChecking=false",
             "-o", "UserKnownHostsFile=/dev/null",
             "-o", "PubkeyAcceptedKeyTypes=+ssh-rsa",
+            "-o", "LogLevel=ERROR",
             f"admin@{host}",
             cmd,
         ]
