@@ -160,10 +160,11 @@ def main():
             if args.reset:
                 subprocess.run(cargs)
             else:
-                out = subprocess.check_output(cargs).decode("utf-8")
+                p = subprocess.run(cargs, stdout=subprocess.PIPE)
+                out = p.stdout.decode("utf-8")
 
                 if "Script file loaded and executed successfully" not in out:
-                    print("Script error")
+                    print("Script error", out)
                     exit(1)
 
 
