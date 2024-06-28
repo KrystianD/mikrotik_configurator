@@ -82,6 +82,20 @@ def generate(args, cfg, files):
     return script
 
 
+def get_ssh_host_port(args, cfg):
+    host = cfg["host"]
+    ssh_port = 22
+
+    if args.override_ip is not None:
+        host = args.override_ip
+
+        if ":" in host:
+            host, ssh_port_str = host.split(":", 1)
+            ssh_port = int(ssh_port_str)
+
+    return host, ssh_port
+
+
 def run_ssh(args, cmd):
     dry_run = args.dry_run
 
@@ -98,20 +112,51 @@ def run_ssh(args, cmd):
         return out
 
 
+def upload_script(args, cfg, script, script_path):
+    host, ssh_port = get_ssh_host_port(args, cfg)
+
+    with tempfile.NamedTemporaryFile(mode="wt") as f:
+        f.write(script)
+        f.flush()
+
+        cargs = [
+            "scp",
+            "-P", str(ssh_port),
+            "-o", "StrictHostKeyChecking=false",
+            "-o", "UserKnownHostsFile=/dev/null",
+            "-o", "PubkeyAcceptedKeyTypes=+ssh-rsa",
+            "-o", "LogLevel=ERROR",
+            f.name,
+            f"admin@{host}:{script_path}"
+        ]
+        run_ssh(args, cargs)
+
+
+def run_cmd(args, cfg, cmd):
+    host, ssh_port = get_ssh_host_port(args, cfg)
+
+    cargs = [
+        "ssh",
+        "-p", str(ssh_port),
+        "-o", "StrictHostKeyChecking=false",
+        "-o", "UserKnownHostsFile=/dev/null",
+        "-o", "PubkeyAcceptedKeyTypes=+ssh-rsa",
+        "-o", "LogLevel=ERROR",
+        f"admin@{host}",
+        cmd,
+    ]
+    out = run_ssh(args, cargs)
+
+    if "Script file loaded and executed successfully" not in out:
+        print("Script error", out)
+        exit(1)
+
+
 def cmd_apply(args, cfg):
     dry_run = args.dry_run
 
-    host = cfg["host"]
     has_flash = cfg.get("has_flash", False)
     base_path = "flash/" if has_flash else ""
-
-    ssh_port = 22
-    if args.override_ip is not None:
-        host = args.override_ip
-
-        if ":" in host:
-            host, ssh_port_str = host.split(":", 1)
-            ssh_port = int(ssh_port_str)
 
     script_name = "output.rsc"
 
@@ -134,41 +179,14 @@ def cmd_apply(args, cfg):
     for index, line in enumerate(script.splitlines(), start=1):
         print('{:4d}: {}'.format(index, line.rstrip()))
 
-    with tempfile.NamedTemporaryFile(mode="wt") as f:
-        f.write(script)
-        f.flush()
+    upload_script(args, cfg, script, f"{base_path}{script_name}")
 
-        cargs = [
-            "scp",
-            "-P", str(ssh_port),
-            "-o", "StrictHostKeyChecking=false",
-            "-o", "UserKnownHostsFile=/dev/null",
-            "-o", "PubkeyAcceptedKeyTypes=+ssh-rsa",
-            "-o", "LogLevel=ERROR",
-            f.name,
-            f"admin@{host}:{base_path}{script_name}"
-        ]
-        run_ssh(args, cargs)
+    if args.reset:
+        cmd = f"/system reset-configuration no-defaults=yes skip-backup=yes run-after-reset={base_path}{script_name}"
+    else:
+        cmd = f"/import file={base_path}{script_name}"
 
-        if args.reset:
-            cmd = f"/system reset-configuration no-defaults=yes skip-backup=yes run-after-reset={base_path}{script_name}"
-        else:
-            cmd = f"/import file={base_path}{script_name}"
-        cargs = [
-            "ssh",
-            "-p", str(ssh_port),
-            "-o", "StrictHostKeyChecking=false",
-            "-o", "UserKnownHostsFile=/dev/null",
-            "-o", "PubkeyAcceptedKeyTypes=+ssh-rsa",
-            "-o", "LogLevel=ERROR",
-            f"admin@{host}",
-            cmd,
-        ]
-        out = run_ssh(args, cargs)
-
-        if "Script file loaded and executed successfully" not in out:
-            print("Script error", out)
-            exit(1)
+    run_cmd(args, cfg, cmd)
 
 
 def cmd_generate(args, cfg):
