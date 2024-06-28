@@ -93,13 +93,14 @@ def main():
     if args.reset:
         script = ":delay 7s\n" + script
 
+    base_path = "flash/" if has_flash else ""
+    script_name = "output.rsc"
+
+    script += f"\n/export file={base_path}reset-config.rsc\n"
     script += "\n/log info message=\"CONFIGURATION DONE\"\n"
 
     while "\n\n\n" in script:
         script = script.replace("\n\n\n", "\n\n")
-
-    base_path = "flash/" if has_flash else ""
-    script_name = "output.rsc"
 
     if args.generate_only:
         print(script)
