@@ -82,6 +82,22 @@ def generate(args, cfg, files):
     return script
 
 
+def run_ssh(args, cmd):
+    dry_run = args.dry_run
+
+    if args.ssh_pass:
+        cmd = ["sshpass", "-p", args.ssh_pass] + cmd
+
+    print(" ".join(cmd))
+
+    if dry_run:
+        return "<dryrun>"
+    else:
+        p = subprocess.run(cmd, stdout=subprocess.PIPE)
+        out = p.stdout.decode("utf-8")
+        return out
+
+
 def cmd_apply(args, cfg):
     dry_run = args.dry_run
 
@@ -132,11 +148,7 @@ def cmd_apply(args, cfg):
             f.name,
             f"admin@{host}:{base_path}{script_name}"
         ]
-        if args.ssh_pass:
-            cargs = ["sshpass", "-p", args.ssh_pass] + cargs
-        print(" ".join(cargs))
-        if not dry_run:
-            subprocess.check_call(cargs)
+        run_ssh(args, cargs)
 
         if args.reset:
             cmd = f"/system reset-configuration no-defaults=yes skip-backup=yes run-after-reset={base_path}{script_name}"
@@ -152,19 +164,11 @@ def cmd_apply(args, cfg):
             f"admin@{host}",
             cmd,
         ]
-        if args.ssh_pass:
-            cargs = ["sshpass", "-p", args.ssh_pass] + cargs
-        print(" ".join(cargs))
-        if not dry_run:
-            if args.reset:
-                subprocess.run(cargs)
-            else:
-                p = subprocess.run(cargs, stdout=subprocess.PIPE)
-                out = p.stdout.decode("utf-8")
+        out = run_ssh(args, cargs)
 
-                if "Script file loaded and executed successfully" not in out:
-                    print("Script error", out)
-                    exit(1)
+        if "Script file loaded and executed successfully" not in out:
+            print("Script error", out)
+            exit(1)
 
 
 def cmd_generate(args, cfg):
