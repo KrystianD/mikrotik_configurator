@@ -2,11 +2,44 @@ import argparse
 import os
 import subprocess
 import tempfile
+from dataclasses import dataclass
 
 import yaml
 
 import generator
 from utils import query_yes_no
+
+
+@dataclass
+class FileInfo:
+    path: str
+    order: int
+    suborder: int
+
+    @property
+    def is_reset(self):
+        return self.order == 0
+
+    @property
+    def sort_order(self):
+        return self.order * 1000 + self.suborder
+
+    @staticmethod
+    def parse(path: str):
+        name = os.path.basename(path)
+        p = name.split("-", 1)
+        assert len(p) == 2
+
+        numbers = name.split("-", 2)[0]
+        numbers = [int(x) for x in numbers.split('_')]
+        assert 1 <= len(numbers) <= 2
+
+        if len(numbers) == 1:
+            order, suborder = numbers[0], 0
+        else:
+            order, suborder = numbers
+
+        return FileInfo(path, order, suborder)
 
 
 def main():
@@ -38,10 +71,9 @@ def main():
             host, ssh_port_str = host.split(":", 1)
             ssh_port = int(ssh_port_str)
 
-    files = args.files
+    files = [FileInfo.parse(x) for x in args.files]
 
-    orders = [float(os.path.basename(x).split("-")[0].replace("_", ".")) for x in files]
-    if orders != list(sorted(orders)):
+    if files != list(sorted(files, key=lambda x: x.sort_order)):
         print("mixed up order")
         exit(1)
 
@@ -49,6 +81,10 @@ def main():
         s = f'\n/log info message="starting {x}..."\n'
         s += generator.render_file(x, cfg.get("include_dirs", []), cfg.get("variables", {}))
         s += f'\n/log info message="finished {x}"\n'
+    def gen(x: FileInfo):
+        s = f'\n/log info message="starting {x.path}..."\n'
+        s += generator.render_file(x.path, cfg.get("include_dirs", []), cfg.get("variables", {}))
+        s += f'\n/log info message="finished {x.path}"\n'
         return s
 
     script = "\n".join(gen(x) for x in files)
@@ -67,11 +103,11 @@ def main():
         print(script)
         return
 
-    if args.reset and orders[0] != 0:
+    if args.reset and not files[0].is_reset:
         print("reset must start with 0_0")
         exit(1)
 
-    if not args.reset and orders[0] == 0:
+    if not args.reset and files[0].is_reset:
         print("not reset can't start with 0_0")
         exit(1)
 
