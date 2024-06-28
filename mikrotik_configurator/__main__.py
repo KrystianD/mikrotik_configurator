@@ -44,35 +44,7 @@ class FileInfo:
         return FileInfo(path, order, suborder)
 
 
-def main():
-    argparser = argparse.ArgumentParser()
-    argparser.add_argument('-c', '--config', default="config.yml", type=str, metavar="PATH")
-    argparser.add_argument('-n', '--dry-run', action='store_true')
-    argparser.add_argument('--reset', action='store_true')
-    argparser.add_argument('--override-ip', type=str)
-    argparser.add_argument('--ssh-pass', type=str)
-    argparser.add_argument('--generate-only', action='store_true')
-    argparser.add_argument('files', type=str, nargs="*", metavar="NAME")
-    args = argparser.parse_args()
-
-    dry_run = args.dry_run
-    if hasattr(yaml, "SafeLoader"):
-        cfg = yaml.load(open(args.config, "rt"), Loader=yaml.SafeLoader)
-    else:
-        # noinspection PyArgumentList
-        cfg = yaml.load(open(args.config, "rt"))
-
-    host = cfg["host"]
-    has_flash = cfg.get("has_flash", False)
-
-    ssh_port = 22
-    if args.override_ip is not None:
-        host = args.override_ip
-
-        if ":" in host:
-            host, ssh_port_str = host.split(":", 1)
-            ssh_port = int(ssh_port_str)
-
+def build_files_list(args):
     if len(args.files) == 0:
         files = [FileInfo.parse(x) for x in glob.glob("*.rsc") if re.match("^[0-9]", x)]
         files = list(sorted(files, key=lambda x: x.sort_order))
@@ -83,6 +55,12 @@ def main():
             print("mixed up order")
             exit(1)
 
+    return files
+
+
+def generate(args, cfg, files):
+    has_flash = cfg.get("has_flash", False)
+
     def gen(x: FileInfo):
         s = f'\n/log info message="starting {x.path}..."\n'
         s += generator.render_file(x.path, cfg.get("include_dirs", []), cfg.get("variables", {}))
@@ -90,11 +68,10 @@ def main():
         return s
 
     script = "\n".join(gen(x) for x in files)
-    if args.reset:
+    if getattr(args, "reset", False):
         script = ":delay 7s\n" + script
 
     base_path = "flash/" if has_flash else ""
-    script_name = "output.rsc"
 
     script += f"\n/export file={base_path}reset-config.rsc\n"
     script += "\n/log info message=\"CONFIGURATION DONE\"\n"
@@ -102,9 +79,27 @@ def main():
     while "\n\n\n" in script:
         script = script.replace("\n\n\n", "\n\n")
 
-    if args.generate_only:
-        print(script)
-        return
+    return script
+
+
+def cmd_apply(args, cfg):
+    dry_run = args.dry_run
+
+    host = cfg["host"]
+    has_flash = cfg.get("has_flash", False)
+    base_path = "flash/" if has_flash else ""
+
+    ssh_port = 22
+    if args.override_ip is not None:
+        host = args.override_ip
+
+        if ":" in host:
+            host, ssh_port_str = host.split(":", 1)
+            ssh_port = int(ssh_port_str)
+
+    script_name = "output.rsc"
+
+    files = build_files_list(args)
 
     if args.reset and not files[0].is_reset:
         print("reset must start with 0_0")
@@ -113,6 +108,8 @@ def main():
     if not args.reset and files[0].is_reset:
         print("not reset can't start with 0_0")
         exit(1)
+
+    script = generate(args, cfg, files)
 
     if not dry_run and args.reset:
         if not query_yes_no("Are you sure you want to reset configuration?", "no"):
@@ -166,6 +163,42 @@ def main():
                 if "Script file loaded and executed successfully" not in out:
                     print("Script error", out)
                     exit(1)
+
+
+def cmd_generate(args, cfg):
+    files = build_files_list(args)
+
+    script = generate(args, cfg, files)
+
+    print(script)
+
+
+def main():
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument('-c', '--config', default="config.yml", type=str, metavar="PATH")
+
+    subparsers = argparser.add_subparsers(required=True)
+    sub_apply = subparsers.add_parser('apply')
+    sub_apply.add_argument('-n', '--dry-run', action='store_true')
+    sub_apply.add_argument('--reset', action='store_true')
+    sub_apply.add_argument('--override-ip', type=str)
+    argparser.add_argument('--ssh-pass', type=str)
+    sub_apply.add_argument('files', type=str, nargs="*", metavar="NAME")
+    sub_apply.set_defaults(func=cmd_apply)
+
+    sub_generate = subparsers.add_parser('generate')
+    sub_generate.add_argument('files', type=str, nargs="*", metavar="NAME")
+    sub_generate.set_defaults(func=cmd_generate)
+
+    args = argparser.parse_args()
+
+    if hasattr(yaml, "SafeLoader"):
+        cfg = yaml.load(open(args.config, "rt"), Loader=yaml.SafeLoader)
+    else:
+        # noinspection PyArgumentList
+        cfg = yaml.load(open(args.config, "rt"))
+
+    args.func(args, cfg)
 
 
 main()

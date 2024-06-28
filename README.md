@@ -59,14 +59,21 @@ variables: # additonal Jinja2 variables
 
 ```shell
 cd example/
-python ../mikrotik_configurator [--dry-run] --reset
+python ../mikrotik_configurator apply [--dry-run] --reset
 ```
 
 ### Part of the configuration re-applying
 
 ```shell
 cd example/
-python ../mikrotik_configurator [--dry-run] 3-port-forwarding.rsc
+python ../mikrotik_configurator apply [--dry-run] 3-port-forwarding.rsc
+```
+
+### Configuration generation only
+
+```shell
+cd example/
+python ../mikrotik_configurator generate 3-port-forwarding.rsc
 ```
 
 # Examples
