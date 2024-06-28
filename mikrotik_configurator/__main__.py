@@ -1,5 +1,7 @@
 import argparse
+import glob
 import os
+import re
 import subprocess
 import tempfile
 from dataclasses import dataclass
@@ -50,7 +52,7 @@ def main():
     argparser.add_argument('--override-ip', type=str)
     argparser.add_argument('--ssh-pass', type=str)
     argparser.add_argument('--generate-only', action='store_true')
-    argparser.add_argument('files', type=str, nargs="+", metavar="NAME")
+    argparser.add_argument('files', type=str, nargs="*", metavar="NAME")
     args = argparser.parse_args()
 
     dry_run = args.dry_run
@@ -71,16 +73,16 @@ def main():
             host, ssh_port_str = host.split(":", 1)
             ssh_port = int(ssh_port_str)
 
-    files = [FileInfo.parse(x) for x in args.files]
+    if len(args.files) == 0:
+        files = [FileInfo.parse(x) for x in glob.glob("*.rsc") if re.match("^[0-9]", x)]
+        files = list(sorted(files, key=lambda x: x.sort_order))
+    else:
+        files = [FileInfo.parse(x) for x in args.files]
 
-    if files != list(sorted(files, key=lambda x: x.sort_order)):
-        print("mixed up order")
-        exit(1)
+        if files != list(sorted(files, key=lambda x: x.sort_order)):
+            print("mixed up order")
+            exit(1)
 
-    def gen(x):
-        s = f'\n/log info message="starting {x}..."\n'
-        s += generator.render_file(x, cfg.get("include_dirs", []), cfg.get("variables", {}))
-        s += f'\n/log info message="finished {x}"\n'
     def gen(x: FileInfo):
         s = f'\n/log info message="starting {x.path}..."\n'
         s += generator.render_file(x.path, cfg.get("include_dirs", []), cfg.get("variables", {}))

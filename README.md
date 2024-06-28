@@ -59,7 +59,7 @@ variables: # additonal Jinja2 variables
 
 ```shell
 cd example/
-python ../mikrotik_configurator [--dry-run] --reset *.rsc
+python ../mikrotik_configurator [--dry-run] --reset
 ```
 
 ### Part of the configuration re-applying
