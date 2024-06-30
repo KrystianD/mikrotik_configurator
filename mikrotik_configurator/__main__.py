@@ -5,6 +5,7 @@ import re
 import subprocess
 import tempfile
 from dataclasses import dataclass
+from datetime import datetime
 
 import yaml
 
@@ -69,7 +70,13 @@ def generate(args, cfg, files):
 
     script_blocks = [gen(x) for x in files]
     if args.reset:
-        script_blocks = [":delay 7s", *script_blocks]
+        cur_date = datetime.now()
+
+        script_blocks = [
+            f"/system/clock/set date={cur_date.strftime('%Y-%m-%d')} time={cur_date.strftime('%H:%M:%S')}",
+            ":delay 7s",
+            *script_blocks,
+        ]
 
     base_path = "flash/" if has_flash else ""
 
