@@ -67,15 +67,17 @@ def generate(args, cfg, files):
         s += f'\n/log info message="finished {x.path}"\n'
         return s
 
-    script = "\n".join(gen(x) for x in files)
+    script_blocks = [gen(x) for x in files]
     if args.reset:
-        script = ":delay 7s\n" + script
+        script_blocks = [":delay 7s", *script_blocks]
 
     base_path = "flash/" if has_flash else ""
 
     if args.reset:
-        script += f"\n/export file={base_path}reset-config.rsc\n"
-    script += "\n/log info message=\"CONFIGURATION DONE\"\n"
+        script_blocks += [f"/export file={base_path}reset-config.rsc"]
+    script_blocks += ["/log info message=\"CONFIGURATION DONE\""]
+
+    script = "\n".join(script_blocks)
 
     while "\n\n\n" in script:
         script = script.replace("\n\n\n", "\n\n")
