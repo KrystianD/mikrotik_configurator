@@ -106,7 +106,7 @@ def get_ssh_host_port(args, cfg):
 
 
 def run_ssh(args, cmd):
-    dry_run = args.dry_run
+    dry_run = getattr(args, "dry_run", False)
 
     if args.ssh_pass:
         cmd = ["sshpass", "-p", args.ssh_pass] + cmd
@@ -141,6 +141,26 @@ def upload_script(args, cfg, script, script_path):
         run_ssh(args, cargs)
 
 
+def read_file(args, cfg, script_path):
+    host, ssh_port = get_ssh_host_port(args, cfg)
+
+    with tempfile.NamedTemporaryFile(mode="w+t") as f:
+        cargs = [
+            "scp",
+            "-P", str(ssh_port),
+            "-o", "StrictHostKeyChecking=false",
+            "-o", "UserKnownHostsFile=/dev/null",
+            "-o", "PubkeyAcceptedKeyTypes=+ssh-rsa",
+            "-o", "LogLevel=ERROR",
+            f"admin@{host}:{script_path}",
+            f.name,
+        ]
+        run_ssh(args, cargs)
+
+        f.seek(0, 0)
+        return f.read()
+
+
 def run_cmd(args, cfg, cmd):
     host, ssh_port = get_ssh_host_port(args, cfg)
 
@@ -156,7 +176,7 @@ def run_cmd(args, cfg, cmd):
     ]
     out = run_ssh(args, cargs)
 
-    if "Script file loaded and executed successfully" not in out:
+    if len(out) > 0 and "Script file loaded and executed successfully" not in out:
         print("Script error", out)
         exit(1)
 
@@ -208,6 +228,27 @@ def cmd_generate(args, cfg):
     print(script)
 
 
+def cmd_diff(args, cfg):
+    run_cmd(args, cfg, "/export file=current-config.rsc")
+
+    has_flash = cfg.get("has_flash", False)
+    base_path = "flash/" if has_flash else ""
+
+    o1 = read_file(args, cfg, f"{base_path}reset-config.rsc")
+    o1 = "\n".join(x for x in o1.splitlines() if not x.startswith("#"))  # remove comments
+    with open(".base.rsc", "wt") as f:
+        f.write(o1)
+        f.close()
+    o2 = read_file(args, cfg, "current-config.rsc")
+    o2 = "\n".join(x for x in o2.splitlines() if not x.startswith("#"))  # remove comments
+    with open(".current.rsc", "wt") as f:
+        f.write(o2)
+        f.close()
+
+    subprocess.run(["meld", ".base.rsc", ".current.rsc"])
+    os.unlink(".base.rsc")
+    os.unlink(".current.rsc")
+
 def main():
     argparser = argparse.ArgumentParser()
     argparser.add_argument('-c', '--config', default="config.yml", type=str, metavar="PATH")
@@ -225,6 +266,11 @@ def main():
     sub_generate.add_argument('--reset', action='store_true')
     sub_generate.add_argument('files', type=str, nargs="*", metavar="NAME")
     sub_generate.set_defaults(func=cmd_generate)
+
+    sub_diff = subparsers.add_parser('diff', help="Diff between reset and current config exports")
+    sub_diff.add_argument('--ssh-pass', type=str)
+    sub_diff.add_argument('--override-ip', type=str)
+    sub_diff.set_defaults(func=cmd_diff)
 
     args = argparser.parse_args()
 

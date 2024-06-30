@@ -76,6 +76,13 @@ cd example/
 python ../mikrotik_configurator generate 3-port-forwarding.rsc
 ```
 
+### Difference between reset configuration and current configuration on the device (using `meld` tool)
+
+```shell
+cd example/
+python ../mikrotik_configurator diff
+```
+
 # Examples
 
 ## Setting admin password from config file
