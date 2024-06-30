@@ -68,6 +68,22 @@ def rollback_delete_chain(name):
     return ""
 
 
+def import_certificate(path):
+    name = os.path.splitext(os.path.basename(path))[0]
+
+    body = ""
+    body += load_file(path, f"{name}.txt")
+    body += f"""
+/certificate import file-name="{name}.txt" passphrase="" name="{name}"
+"""
+    cleanup_body = generate_catch_block(f"""
+/certificate remove "{name}"
+""")
+    cleanups.insert(0, cleanup_body)
+
+    return body
+
+
 def render_file(path: str, include_dirs: List[str], variables: Dict[str, str]):
     global cleanups
     cleanups = []
@@ -84,6 +100,7 @@ def render_file(path: str, include_dirs: List[str], variables: Dict[str, str]):
     env.globals['register_cleanup'] = register_cleanup
     env.globals['escape_string'] = escape_string
     env.globals['rollback_delete_chain'] = rollback_delete_chain
+    env.globals['import_certificate'] = import_certificate
     env.globals = {**env.globals, **variables}
 
     env.filters["ipnet"] = lambda x: str(IPNetwork(x))
