@@ -176,7 +176,9 @@ def cmd_apply(args, cfg):
     script = generate(args, cfg, files)
 
     if not dry_run and args.reset:
-        if not query_yes_no("Are you sure you want to reset configuration?", "no"):
+        host, ssh_port = get_ssh_host_port(args, cfg)
+
+        if not query_yes_no(f"Are you sure you want to reset configuration ({host}:{ssh_port})?", "no"):
             exit(1)
 
     for index, line in enumerate(script.splitlines(), start=1):
