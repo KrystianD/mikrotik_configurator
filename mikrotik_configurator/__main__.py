@@ -212,6 +212,7 @@ def main():
     sub_apply.set_defaults(func=cmd_apply)
 
     sub_generate = subparsers.add_parser('generate')
+    sub_generate.add_argument('--reset', action='store_true')
     sub_generate.add_argument('files', type=str, nargs="*", metavar="NAME")
     sub_generate.set_defaults(func=cmd_generate)
 
