@@ -1,6 +1,11 @@
+/caps-man access-list
+/caps-man channel
 /caps-man configuration
+/caps-man datapath
 /caps-man manager
+/caps-man manager interface
 /caps-man provisioning
+/caps-man security
 /certificate
 /certificate import
 /file
@@ -9,6 +14,7 @@
 /interface bridge
 /interface bridge filter
 /interface bridge port
+/interface bridge vlan
 /interface ethernet
 /interface ethernet
 /interface list
@@ -18,6 +24,7 @@
 /interface ovpn-server
 /interface vlan
 /interface wireless
+/interface wireless cap
 /interface wireless security-profiles
 /ip
 /ip address
@@ -44,14 +51,18 @@
 /lcd pin
 /ppp profile
 /ppp secret
+/system clock
 /system identity
 /system logging
 /system logging action
+/system ntp client
 /system package
 /system scheduler
 /system script
 /tool bandwidth-server
 /tool fetch
 /tool mac-server
+/tool mac-server mac-winbox
+/tool romon set
 /user
 /user ssh-keys import
