@@ -86,8 +86,7 @@ def generate(args, cfg, files):
 
     script = "\n".join(script_blocks)
 
-    while "\n\n\n" in script:
-        script = script.replace("\n\n\n", "\n\n")
+    script = re.sub("[\n\t ]{2,}\n", "\n\n", script)
 
     return script
 
